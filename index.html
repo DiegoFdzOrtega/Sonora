@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="oscuro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Reproductor multimedia hecho con HTML, CSS y JavaScript puro, con la librería propia Onda.js">
+  <meta name="author" content="Diego Fernández Ortega">
+  <title>diegofo | sonora</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ef7b45'/%3E%3Cpath d='M7 18v-4M12 22V10M17 25V7M22 20v-8M27 17v-2' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ MENÚ LATERAL ============ -->
+    <aside class="lateral">
+      <div class="marca">
+        <span class="marca__logo" data-icono="onda"></span>
+        <span class="marca__texto">diegofo <b>| sonora</b></span>
+      </div>
+
+      <nav class="menu" aria-label="Secciones">
+        <button class="menu__boton activo" data-vista="biblioteca"><span data-icono="biblioteca"></span><span>Biblioteca</span></button>
+        <button class="menu__boton" data-vista="reproduciendo"><span data-icono="nota"></span><span>Reproduciendo</span></button>
+        <button class="menu__boton" data-vista="ecualizador"><span data-icono="eq"></span><span>Sonido</span></button>
+        <button class="menu__boton" data-vista="grabadora"><span data-icono="micro"></span><span>Grabadora</span></button>
+        <button class="menu__boton" data-vista="ajustes"><span data-icono="ajustes"></span><span>Ajustes</span></button>
+      </nav>
+
+      <label class="boton boton--principal boton--ancho">
+        <span data-icono="mas"></span><span class="texto-boton">Importar archivos</span>
+        <input type="file" id="inputImportar" multiple hidden
+               accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.m4a,.mp4,.webm,.mkv,.lrc,.srt,.vtt">
+      </label>
+    </aside>
+
+    <!-- ============ CONTENIDO ============ -->
+    <main class="contenido">
+
+      <!-- ---- BIBLIOTECA ---- -->
+      <section class="vista activa" id="vista-biblioteca">
+        <header class="cabecera">
+          <div>
+            <h1>Biblioteca</h1>
+          </div>
+          <div class="buscador">
+            <span data-icono="lupa"></span>
+            <input type="search" id="buscador" placeholder="Buscar por título, artista o álbum" aria-label="Buscar">
+          </div>
+        </header>
+
+        <nav class="subtabs" role="tablist" aria-label="Partes de la biblioteca">
+          <button class="subtab activo" data-subvista="canciones" role="tab" aria-selected="true">
+            <span data-icono="nota"></span>Canciones<span class="subtab__contador" id="contadorCanciones"></span>
+          </button>
+          <button class="subtab" data-subvista="albumes" role="tab" aria-selected="false">
+            <span data-icono="disco"></span>Álbumes<span class="subtab__contador" id="contadorAlbumes"></span>
+          </button>
+          <button class="subtab" data-subvista="artistas" role="tab" aria-selected="false">
+            <span data-icono="persona"></span>Artistas<span class="subtab__contador" id="contadorArtistas"></span>
+          </button>
+          <button class="subtab" data-subvista="favoritos" role="tab" aria-selected="false">
+            <span data-icono="corazon"></span>Favoritos<span class="subtab__contador" id="contadorFavoritos"></span>
+          </button>
+        </nav>
+
+        <!-- ---- Canciones ---- -->
+        <div class="subvista activa" id="subvista-canciones">
+
+          <!-- Portada de inicio: saludo, accesos rápidos y lo último -->
+          <div class="hogar" id="hogar" hidden>
+            <div class="hogar__saludo">
+              <h2 class="hogar__titulo" id="saludoTexto">Buenas tardes</h2>
+              <p class="hogar__sub">Esto es lo que has estado escuchando</p>
+            </div>
+
+            <div class="hogar__accesos">
+              <button class="acceso acceso--musica" type="button" data-acceso="musica"><span data-icono="nota"></span>Música</button>
+              <button class="acceso acceso--video" type="button" data-acceso="video"><span data-icono="camara"></span>Vídeos</button>
+              <button class="acceso acceso--reciente" type="button" data-acceso="reciente"><span data-icono="ordenar"></span>Recientes</button>
+              <button class="acceso acceso--favorito" type="button" data-acceso="favorito"><span data-icono="corazonLleno"></span>Favoritos</button>
+            </div>
+
+            <div class="hogar__seccion" id="seccionReciente" hidden>
+              <h3>Escuchado recientemente</h3>
+              <div class="tarjeta-hero" id="tarjetaReciente"></div>
+            </div>
+
+            <div class="hogar__seccion" id="seccionAlbumesHogar" hidden>
+              <div class="hogar__cabecera-seccion"><h3>Tus álbumes</h3><button class="enlace" type="button" data-subvista="albumes">Ver todo</button></div>
+              <div class="fila-tarjetas" id="filaAlbumesHogar"></div>
+            </div>
+
+            <div class="hogar__seccion" id="seccionArtistasHogar" hidden>
+              <div class="hogar__cabecera-seccion"><h3>Tus artistas</h3><button class="enlace" type="button" data-subvista="artistas">Ver todo</button></div>
+              <div class="fila-tarjetas" id="filaArtistasHogar"></div>
+            </div>
+          </div>
+
+          <div class="filtros" role="tablist">
+            <button class="chip activo" data-filtro="todo">Todo</button>
+            <button class="chip" data-filtro="audio">Música</button>
+            <button class="chip" data-filtro="video">Vídeos</button>
+            <select class="selector-orden" id="ordenCanciones" aria-label="Ordenar por">
+              <option value="reciente">Añadido recientemente</option>
+              <option value="titulo">Título (A-Z)</option>
+              <option value="artista">Artista (A-Z)</option>
+              <option value="duracion">Duración</option>
+            </select>
+            <span class="filtros__contador" id="contador">0 elementos</span>
+          </div>
+
+          <div class="soltar" id="zonaSoltar">
+            <span class="soltar__icono" data-icono="subir"></span>
+            <h2>Arrastra aquí tu música y tus vídeos</h2>
+            <p>MP3, WAV, OGG, FLAC, M4A, MP4, WEBM... Si arrastras también un <b>.lrc</b> o un <b>.srt</b> con el mismo nombre, se asocia solo.</p>
+            <label class="boton boton--principal">Elegir archivos
+              <input type="file" id="inputImportar2" multiple hidden accept="audio/*,video/*,.lrc,.srt,.vtt">
+            </label>
+          </div>
+
+          <table class="tabla" id="tabla" hidden>
+            <thead>
+              <tr><th>#</th><th>Título</th><th class="col-album">Álbum</th><th class="col-tipo">Tipo</th><th>Duración</th><th></th></tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+          </table>
+          <p class="vacio" id="sinResultados" hidden>No hay nada que coincida con la búsqueda.</p>
+        </div>
+
+        <!-- ---- Álbumes ---- -->
+        <div class="subvista" id="subvista-albumes" hidden>
+          <div class="rejilla-tarjetas" id="rejillaAlbumes"></div>
+          <p class="vacio" id="sinAlbumes" hidden>
+            Aquí aparecerán tus álbumes. Importa canciones que tengan la etiqueta de álbum rellena
+            (se lee del propio MP3, byte a byte).
+          </p>
+          <div class="detalle" id="detalleAlbum" hidden></div>
+        </div>
+
+        <!-- ---- Artistas ---- -->
+        <div class="subvista" id="subvista-artistas" hidden>
+          <div class="rejilla-tarjetas rejilla-tarjetas--redondas" id="rejillaArtistas"></div>
+          <p class="vacio" id="sinArtistas" hidden>Aquí aparecerán los artistas de tu música en cuanto importes alguna canción.</p>
+          <div class="detalle" id="detalleArtista" hidden></div>
+        </div>
+
+        <!-- ---- Favoritos ---- -->
+        <div class="subvista" id="subvista-favoritos" hidden>
+          <div class="hero-favoritos" id="heroFavoritos" hidden>
+            <div class="hero-favoritos__arte"><span data-icono="corazonLleno"></span></div>
+            <div class="hero-favoritos__texto">
+              <h1>Favoritos</h1>
+              <p class="hero-favoritos__meta" id="metaFavoritos"></p>
+              <div class="hero-favoritos__acciones">
+                <button class="boton boton--principal boton--pequeno" id="btnReproducirFavoritos"><span data-icono="play"></span>Reproducir</button>
+                <button class="boton boton--pequeno" id="btnMezclarFavoritos"><span data-icono="aleatorio"></span>Mezclar</button>
+              </div>
+            </div>
+          </div>
+          <table class="tabla" id="tablaFavoritos" hidden>
+            <thead>
+              <tr><th>#</th><th>Título</th><th class="col-album">Álbum</th><th class="col-tipo">Tipo</th><th>Duración</th><th></th></tr>
+            </thead>
+            <tbody id="cuerpoFavoritos"></tbody>
+          </table>
+          <p class="vacio" id="sinFavoritos" hidden>
+            Aún no tienes favoritos. Pulsa el <b>♡</b> de una canción o de un vídeo para guardarlo aquí.
+          </p>
+        </div>
+      </section>
+
+      <!-- ---- REPRODUCIENDO ---- -->
+      <section class="vista" id="vista-reproduciendo">
+        <div class="nada" id="nadaSonando">
+          <span data-icono="nota"></span>
+          <h2>No está sonando nada</h2>
+          <p>Elige algo de tu biblioteca para empezar.</p>
+        </div>
+
+        <!-- Modo audio -->
+        <div class="escena" id="escenaAudio" hidden>
+          <div class="escena__disco">
+            <div class="caratula caratula--grande" id="caratulaGrande"></div>
+            <div class="escena__datos">
+              <p class="escena__album" id="albumGrande"></p>
+              <div class="escena__titulo-fila">
+                <h1 id="tituloGrande">—</h1>
+                <button class="icono icono--corazon" id="btnFavoritoGrande" aria-label="Añadir a favoritos" title="Añadir a favoritos"><span data-icono="corazon"></span></button>
+              </div>
+              <p class="escena__artista" id="artistaGrande"></p>
+            </div>
+            <canvas class="visualizador" id="visualizador" aria-hidden="true"></canvas>
+          </div>
+          <div class="letra">
+            <div class="letra__cabecera">
+              <h2>Letra</h2>
+              <label class="boton boton--pequeno">Cargar .lrc
+                <input type="file" id="inputLetra" accept=".lrc,.txt" hidden>
+              </label>
+            </div>
+            <div class="letra__cuerpo" id="letra"></div>
+          </div>
+        </div>
+
+        <!-- Modo vídeo -->
+        <div class="escena-video" id="escenaVideo" hidden>
+          <div class="marco-video">
+            <video id="video" playsinline></video>
+          </div>
+          <div class="panel-video">
+            <h2 id="tituloVideo">—</h2>
+            <div class="grupo-botones">
+              <label class="boton boton--pequeno"><span data-icono="cc"></span>Subtítulos (.srt / .vtt)
+                <input type="file" id="inputSubtitulos" accept=".srt,.vtt" hidden>
+              </label>
+              <button class="boton boton--pequeno" id="btnCaptura"><span data-icono="camara"></span>Capturar fotograma</button>
+              <button class="boton boton--pequeno" id="btnPantallaCompleta"><span data-icono="expandir"></span>Pantalla completa</button>
+            </div>
+
+            <h3>Efectos en tiempo real</h3>
+            <div class="efectos">
+              <label>Brillo <input type="range" min="0" max="200" value="100" data-efecto="brightness"></label>
+              <label>Contraste <input type="range" min="0" max="200" value="100" data-efecto="contrast"></label>
+              <label>Saturación <input type="range" min="0" max="300" value="100" data-efecto="saturate"></label>
+              <label>Desenfoque <input type="range" min="0" max="10" value="0" data-efecto="blur"></label>
+              <label>Tono <input type="range" min="0" max="360" value="0" data-efecto="hue-rotate"></label>
+              <label>Estilo
+                <select id="estiloVideo">
+                  <option value="">Normal</option>
+                  <option value="grayscale(1)">Blanco y negro</option>
+                  <option value="sepia(1)">Sepia</option>
+                  <option value="invert(1)">Negativo</option>
+                </select>
+              </label>
+            </div>
+            <button class="boton boton--fantasma boton--pequeno" id="btnResetEfectos">Quitar efectos</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- SONIDO / ECUALIZADOR ---- -->
+      <section class="vista" id="vista-ecualizador">
+        <header class="cabecera">
+          <div>
+            <h1>Sonido</h1>
+          </div>
+        </header>
+
+        <div class="panel-sonido">
+          <div class="bloque-eq">
+            <div class="bloque-eq__cabecera">
+              <h2>Ecualizador</h2>
+              <div class="grupo-botones" id="presets"></div>
+            </div>
+            <div class="eq" id="ecualizador"></div>
+          </div>
+
+          <div class="lista-ajustes">
+            <div class="ajuste">
+              <div class="ajuste__texto">
+                <h3>Fundido entre canciones</h3>
+                <p class="ayuda">Cuando una canción está acabando, la siguiente empieza a sonar mientras la otra baja de volumen.</p>
+              </div>
+              <div class="ajuste__control fila-rango">
+                <input type="range" id="rangoFundido" min="0" max="12" step="1" value="0">
+                <output id="valorFundido">Desactivado</output>
+              </div>
+            </div>
+            <div class="ajuste">
+              <div class="ajuste__texto">
+                <h3>Volumen igualado</h3>
+                <p class="ayuda">Un compresor baja las partes que suenan muy fuerte para que todas las canciones suenen parecido.</p>
+              </div>
+              <div class="ajuste__control">
+                <label class="interruptor">
+                  <input type="checkbox" id="checkNormalizar">
+                  <span class="interruptor__pista"></span>
+                  <span>Activar</span>
+                </label>
+              </div>
+            </div>
+            <div class="ajuste">
+              <div class="ajuste__texto">
+                <h3>Velocidad</h3>
+                <p class="ayuda">Cambia la velocidad de reproducción sin cambiar el tono.</p>
+              </div>
+              <div class="ajuste__control">
+                <select id="velocidad">
+                  <option value="0.5">0.5×</option>
+                  <option value="0.75">0.75×</option>
+                  <option value="1" selected>1× (normal)</option>
+                  <option value="1.25">1.25×</option>
+                  <option value="1.5">1.5×</option>
+                  <option value="2">2×</option>
+                </select>
+              </div>
+            </div>
+            <div class="ajuste">
+              <div class="ajuste__texto">
+                <h3>Convertir a WAV</h3>
+                <p class="ayuda">Convierte lo que está sonando (o el audio de un vídeo) en un archivo WAV escrito byte a byte.</p>
+              </div>
+              <div class="ajuste__control">
+                <button class="boton" id="btnConvertir"><span data-icono="descargar"></span>Convertir actual</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- GRABADORA ---- -->
+      <section class="vista" id="vista-grabadora">
+        <header class="cabecera">
+          <div>
+            <h1>Grabadora</h1>
+          </div>
+        </header>
+
+        <div class="tarjeta">
+          <h2>1. Elige qué grabar</h2>
+          <div class="fuentes">
+            <button class="fuente" data-fuente="microfono"><span data-icono="micro"></span>Micrófono</button>
+            <button class="fuente" data-fuente="camara"><span data-icono="camara"></span>Cámara</button>
+            <button class="fuente" data-fuente="pantalla"><span data-icono="pantalla"></span>Pantalla</button>
+          </div>
+
+          <div class="previa" id="previa" hidden>
+            <video id="videoPrevia" muted playsinline autoplay></video>
+            <div class="previa__micro" id="previaMicro"><span data-icono="micro"></span>Micrófono preparado</div>
+          </div>
+
+          <div class="controles-grabar">
+            <button class="boton boton--grabar" id="btnGrabar" disabled><span class="punto"></span><span id="textoGrabar">Grabar</span></button>
+            <span class="cronometro" id="cronometro">0:00</span>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <h2>2. Tus grabaciones</h2>
+          <ul class="grabaciones" id="listaGrabaciones">
+            <li class="vacio">Todavía no has grabado nada.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ---- AJUSTES ---- -->
+      <section class="vista" id="vista-ajustes">
+        <header class="cabecera">
+          <div>
+            <h1>Ajustes</h1>
+          </div>
+        </header>
+
+        <div class="lista-ajustes lista-ajustes--suelta">
+          <div class="ajuste">
+            <div class="ajuste__texto">
+              <h3>Apariencia</h3>
+              <p class="ayuda">Cambia entre el tema oscuro y el tema claro.</p>
+            </div>
+            <div class="ajuste__control">
+              <button class="boton" id="btnTema"><span data-icono="luna"></span><span id="textoTema">Tema claro</span></button>
+            </div>
+          </div>
+          <div class="ajuste">
+            <div class="ajuste__texto">
+              <h3>Atajos de teclado</h3>
+              <p class="ayuda">Mira todas las teclas rápidas para controlar la reproducción.</p>
+            </div>
+            <div class="ajuste__control">
+              <button class="boton" id="btnAtajos"><span data-icono="teclado"></span>Ver atajos</button>
+            </div>
+          </div>
+          <div class="ajuste">
+            <div class="ajuste__texto">
+              <h3>Biblioteca guardada</h3>
+              <p class="ayuda">Tu música y vídeos se guardan en este navegador para que sigan aquí aunque recargues la página. Esto los borra del todo.</p>
+            </div>
+            <div class="ajuste__control">
+              <button class="boton boton--peligro" id="btnVaciarBiblioteca"><span data-icono="papelera"></span>Vaciar biblioteca</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ BARRA DEL REPRODUCTOR ============ -->
+    <footer class="barra">
+      <div class="barra__info">
+        <div class="caratula caratula--mini" id="caratulaMini"></div>
+        <div class="barra__textos">
+          <p class="barra__titulo" id="tituloMini">Nada sonando</p>
+          <p class="barra__artista" id="artistaMini">Importa tus archivos para empezar</p>
+        </div>
+      </div>
+
+      <div class="barra__centro">
+        <div class="controles">
+          <button class="icono" id="btnAleatorio" title="Aleatorio (S)" aria-label="Aleatorio"><span data-icono="aleatorio"></span></button>
+          <button class="icono" id="btnAnterior" title="Anterior (P)" aria-label="Anterior"><span data-icono="anterior"></span></button>
+          <button class="icono icono--play" id="btnPlay" title="Reproducir / Pausa (Espacio)" aria-label="Reproducir"><span data-icono="play"></span></button>
+          <button class="icono" id="btnSiguiente" title="Siguiente (N)" aria-label="Siguiente"><span data-icono="siguiente"></span></button>
+          <button class="icono" id="btnRepetir" title="Repetir (R)" aria-label="Repetir"><span data-icono="repetir"></span></button>
+        </div>
+        <div class="progreso">
+          <span class="tiempo" id="tiempoActual">0:00</span>
+          <input type="range" class="rango" id="barraProgreso" min="0" max="1000" value="0" aria-label="Progreso">
+          <span class="tiempo" id="tiempoTotal">0:00</span>
+        </div>
+      </div>
+
+      <div class="barra__derecha">
+        <button class="icono icono--corazon" id="btnFavoritoMini" title="Añadir a favoritos" aria-label="Añadir a favoritos"><span data-icono="corazon"></span></button>
+        <button class="icono" id="btnMini" title="Mini reproductor flotante" aria-label="Mini reproductor"><span data-icono="mini"></span></button>
+        <button class="icono" id="btnSilencio" title="Silenciar (M)" aria-label="Silenciar"><span data-icono="volumen"></span></button>
+        <input type="range" class="rango rango--volumen" id="volumen" min="0" max="100" value="80" aria-label="Volumen">
+      </div>
+    </footer>
+  </div>
+
+  <!-- Elementos de audio ocultos: dos, para poder hacer el fundido entre canciones -->
+  <audio id="audioA" preload="auto"></audio>
+  <audio id="audioB" preload="auto"></audio>
+
+  <!-- Avisos -->
+  <div class="avisos" id="avisos" aria-live="polite"></div>
+
+  <!-- Ventana de atajos de teclado -->
+  <dialog class="dialogo" id="dialogoAtajos">
+    <h2>Atajos de teclado</h2>
+    <dl class="atajos">
+      <dt><kbd>Espacio</kbd></dt><dd>Reproducir / pausa</dd>
+      <dt><kbd>→</kbd> <kbd>←</kbd></dt><dd>Avanzar / retroceder 5 s</dd>
+      <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Subir / bajar volumen</dd>
+      <dt><kbd>N</kbd> <kbd>P</kbd></dt><dd>Siguiente / anterior</dd>
+      <dt><kbd>M</kbd></dt><dd>Silenciar</dd>
+      <dt><kbd>S</kbd> <kbd>R</kbd></dt><dd>Aleatorio / repetir</dd>
+      <dt><kbd>L</kbd></dt><dd>Añadir a favoritos</dd>
+      <dt><kbd>F</kbd></dt><dd>Pantalla completa (vídeo)</dd>
+    </dl>
+    <form method="dialog"><button class="boton boton--principal">Entendido</button></form>
+  </dialog>
+
+  <!-- Primero la librería y después la aplicación que la usa -->
+  <script src="js/onda/onda.js"></script>
+  <script src="js/iconos.js"></script>
+  <script src="js/arte.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
